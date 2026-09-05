@@ -7,12 +7,11 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
-      --night-sky: #070b19;
       --star-glow: #38bdf8;
       --pink-glow: #f472b6;
       --gold-glow: #fbbf24;
-      --glass-card: rgba(15, 23, 42, 0.78);
-      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-card: rgba(15, 23, 42, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.18);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,71 +26,70 @@
       padding-bottom: 80px;
     }
 
-    /* Fixed Canvas for Ambient Stars & Floating Reasons */
-    #skyCanvas {
+    /* Ambient Background Starfield Canvas */
+    #ambientSky {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
       z-index: 1;
-      pointer-events: auto;
+      pointer-events: none;
     }
 
-    /* Foreground Content Container */
     .content-wrap {
       position: relative;
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px 16px;
-      max-width: 680px;
+      padding: 24px 16px;
+      max-width: 720px;
       margin: 0 auto;
     }
 
-    /* Floating Vinyl Player */
-    .vinyl-player {
+    /* Constant Music Pill */
+    .music-pill {
       position: fixed;
-      bottom: 18px;
-      right: 18px;
+      top: 16px;
+      right: 16px;
       z-index: 100;
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(16px);
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--glass-border);
-      padding: 8px 14px 8px 8px;
-      border-radius: 40px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      font-size: 11px;
+      color: var(--star-glow);
+      font-weight: 600;
     }
-    .disc {
-      width: 38px;
-      height: 38px;
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: radial-gradient(circle, #1e293b 35%, #0f172a 40%, #0284c7 42%, #000 45%, #334155 70%, #000 100%);
-      border: 2px solid #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-      animation: spin 3.5s linear infinite;
-      animation-play-state: paused;
+      background: #38bdf8;
+      box-shadow: 0 0 10px #38bdf8;
+      animation: pulseMusic 1.5s infinite;
     }
-    .disc.playing { animation-play-state: running; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    .track-info { font-size: 11px; text-align: left; }
-    .track-title { font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; }
-    .track-sub { font-size: 9px; color: #94a3b8; }
+    @keyframes pulseMusic {
+      0%, 100% { opacity: 0.3; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
 
-    /* Top Chronometer Header */
+    /* Chronometer Card */
     .chronometer-card {
       text-align: center;
       background: var(--glass-card);
       backdrop-filter: blur(20px);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 14px 22px;
-      margin-bottom: 24px;
+      border-radius: 22px;
+      padding: 16px 20px;
+      margin-bottom: 30px;
+      margin-top: 30px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       width: 100%;
     }
@@ -100,57 +98,49 @@
       letter-spacing: 2px;
       text-transform: uppercase;
       color: var(--star-glow);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     .timer-text {
-      font-size: 14px;
+      font-size: 14.5px;
       font-weight: 600;
       color: #f1f5f9;
       font-variant-numeric: tabular-nums;
     }
 
-    /* Counter Badge for Discovered Stars */
-    .discovery-counter {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--pink-glow);
-      background: rgba(244, 114, 182, 0.15);
-      border: 1px solid rgba(244, 114, 182, 0.3);
-      padding: 6px 16px;
-      border-radius: 20px;
-      margin-bottom: 26px;
-      animation: pulse 2.5s infinite;
-    }
-    @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
-
-    /* Section Headers */
     .section-title {
       font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #94a3b8;
-      margin: 32px 0 10px 0;
+      margin: 36px 0 8px 0;
       text-align: center;
+      font-weight: 700;
     }
     .section-desc {
-      font-size: 12px;
-      color: #64748b;
-      margin-bottom: 18px;
+      font-size: 12.5px;
+      color: #38bdf8;
+      margin-bottom: 20px;
       text-align: center;
       font-style: italic;
     }
 
-    /* --- WINDOW OF US: 3D FLIP POLAROIDS --- */
+    /* --- 1. ENLARGED WINDOW OF US (LARGE POLAROIDS) --- */
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
+      grid-template-columns: 1fr;
+      gap: 22px;
       width: 100%;
-      margin-bottom: 30px;
+      margin-bottom: 35px;
     }
+    @media (min-width: 540px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     .flip-card {
       background-color: transparent;
-      height: 200px;
+      height: 380px; /* Greatly enlarged vertical viewing area */
       perspective: 1000px;
       cursor: pointer;
     }
@@ -159,9 +149,9 @@
       width: 100%;
       height: 100%;
       text-align: center;
-      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
       transform-style: preserve-3d;
-      border-radius: 16px;
+      border-radius: 20px;
     }
     .flip-card.flipped .flip-inner {
       transform: rotateY(180deg);
@@ -172,67 +162,167 @@
       height: 100%;
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
-      border-radius: 16px;
+      border-radius: 20px;
       border: 1px solid var(--glass-border);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
     }
     .flip-front {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 12px;
-      backdrop-filter: blur(10px);
+      padding: 20px;
+      backdrop-filter: blur(14px);
     }
-    .flip-front span { font-size: 28px; margin-bottom: 6px; }
-    .flip-front p { font-size: 11px; color: #93c5fd; font-weight: 600; }
-    .flip-front small { font-size: 9px; color: #64748b; margin-top: 4px; }
+    .flip-front span { font-size: 42px; margin-bottom: 12px; }
+    .flip-front p { font-size: 16px; color: #93c5fd; font-weight: 700; text-transform: lowercase; }
+    .flip-front small { font-size: 11px; color: #64748b; margin-top: 8px; letter-spacing: 0.5px; }
+
     .flip-back {
-      background: #0f172a;
+      background: #0b1120;
       transform: rotateY(180deg);
       overflow: hidden;
-      padding: 6px 6px 24px 6px;
+      padding: 10px 10px 42px 10px;
     }
     .flip-back img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 12px;
+      border-radius: 14px;
     }
     .flip-back .caption {
       position: absolute;
-      bottom: 5px;
+      bottom: 12px;
       left: 0;
       width: 100%;
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       color: #f8fafc;
-      text-shadow: 0 1px 4px #000;
+      text-shadow: 0 2px 6px #000;
+      text-transform: lowercase;
     }
 
-    /* --- THE POEM SCROLL --- */
-    .poem-scroll {
-      background: linear-gradient(180deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(244, 114, 182, 0.25);
-      border-radius: 20px;
+    /* --- 2. DEDICATED 50 REASONS VAULT BOX --- */
+    .reasons-box {
+      width: 100%;
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.85));
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      border-radius: 24px;
+      padding: 22px 18px;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.7), inset 0 0 25px rgba(56, 189, 248, 0.1);
+      margin-bottom: 35px;
+    }
+    .reasons-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    @media (min-width: 480px) {
+      .reasons-grid { grid-template-columns: repeat(10, 1fr); }
+    }
+    .star-node {
+      aspect-ratio: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .star-node:hover, .star-node:active {
+      transform: scale(1.08);
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+    }
+    .star-node.revealed {
+      background: linear-gradient(135deg, rgba(244, 114, 182, 0.3), rgba(56, 189, 248, 0.3));
+      border-color: #f472b6;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.4);
+    }
+
+    /* Modal for Selected Reason */
+    #reasonModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.92);
+      width: 86%;
+      max-width: 420px;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--star-glow);
+      border-radius: 22px;
       padding: 24px 20px;
+      z-index: 1000;
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+      text-align: center;
+      transition: all 0.25s ease;
+      opacity: 0;
+    }
+    #reasonModal.active {
+      display: block;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    #reasonNumber {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--pink-glow);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    #reasonText {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f8fafc;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .modal-close-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* --- 3. THE POEM SCROLL --- */
+    .poem-scroll {
+      background: linear-gradient(180deg, rgba(30, 27, 75, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      border-radius: 22px;
+      padding: 26px 20px;
       width: 100%;
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
-      margin-bottom: 30px;
+      margin-bottom: 35px;
       text-align: center;
     }
     .poem-scroll h3 {
       font-size: 15px;
       color: var(--pink-glow);
       letter-spacing: 1.5px;
-      margin-bottom: 14px;
-      font-weight: 700;
+      margin-bottom: 16px;
+      font-weight: 800;
     }
     .poem-lines {
-      font-size: 12.5px;
-      line-height: 2;
+      font-size: 13px;
+      line-height: 2.1;
       color: #e2e8f0;
       font-family: serif;
       font-style: italic;
@@ -240,7 +330,7 @@
       white-space: pre-line;
     }
 
-    /* --- WAX SEAL VAULT & LETTER --- */
+    /* --- 4. WAX SEAL VAULT & LETTER --- */
     .vault-container {
       width: 100%;
       margin-bottom: 40px;
@@ -258,32 +348,32 @@
     }
     .wax-seal-wrapper:active { transform: scale(0.96); }
     .wax-seal {
-      width: 82px;
-      height: 82px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #fb7185, #e11d48 70%, #9f1239 100%);
-      box-shadow: 0 8px 24px rgba(225, 29, 72, 0.5), inset 0 2px 4px rgba(255,255,255,0.4);
+      box-shadow: 0 8px 26px rgba(225, 29, 72, 0.5), inset 0 2px 4px rgba(255,255,255,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       border: 3px dashed rgba(255, 255, 255, 0.3);
-      font-size: 28px;
+      font-size: 30px;
     }
     .seal-hint {
       margin-top: 10px;
-      font-size: 11px;
+      font-size: 11.5px;
       color: #fb7185;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.5px;
     }
     .letter-paper {
       display: none;
-      margin-top: 20px;
+      margin-top: 22px;
       background: linear-gradient(170deg, #fffbeb 0%, #fef3c7 100%);
       color: #1e1e24;
-      border-radius: 16px;
-      padding: 26px 20px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      border-radius: 18px;
+      padding: 28px 22px;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.65);
       width: 100%;
       border: 2px solid #fde68a;
       opacity: 0;
@@ -304,81 +394,26 @@
       letter-spacing: 0.5px;
     }
     .letter-text {
-      font-size: 13px;
-      line-height: 1.8;
+      font-size: 13.5px;
+      line-height: 1.85;
       color: #292524;
       white-space: pre-line;
       text-align: left;
-    }
-
-    /* --- FLOATING MODAL FOR REVEALED STAR REASONS --- */
-    #reasonModal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.9);
-      width: 85%;
-      max-width: 400px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid var(--star-glow);
-      border-radius: 20px;
-      padding: 22px 18px;
-      z-index: 1000;
-      box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
-      text-align: center;
-      transition: all 0.25s ease;
-      opacity: 0;
-    }
-    #reasonModal.active {
-      display: block;
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
-    }
-    #reasonNumber {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--pink-glow);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    #reasonText {
-      font-size: 15px;
-      font-weight: 600;
-      color: #f8fafc;
-      line-height: 1.5;
-      margin-bottom: 18px;
-    }
-    .modal-close-btn {
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      color: #fff;
-      border: none;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Audio Element (Put song.mp3 in the repo folder) -->
-  <audio id="bgSong" loop src="song.mp3"></audio>
+  <!-- Background Audio Element (Loops Forever, No Pause Control) -->
+  <audio id="bgSong" loop src="song.mp3" preload="auto"></audio>
 
-  <!-- Background Canvas with Floating Drifting Stars -->
-  <canvas id="skyCanvas"></canvas>
+  <!-- Ambient Sky Canvas -->
+  <canvas id="ambientSky"></canvas>
 
-  <!-- Floating Vinyl Player Widget -->
-  <div class="vinyl-player" id="musicToggle" onclick="toggleMusic()">
-    <div class="disc" id="disc"></div>
-    <div class="track-info">
-      <div class="track-title">Can't Help Falling in Love</div>
-      <div class="track-sub" id="musicStatus">Tap to Play Music 🎵</div>
-    </div>
+  <!-- Constant Music Status Pill -->
+  <div class="music-pill">
+    <div class="pulse-dot"></div>
+    <span>Can't Help Falling in Love 🎶</span>
   </div>
 
   <div class="content-wrap">
@@ -389,108 +424,118 @@
       <div class="timer-text" id="timeElapsed">Calculating lightyears...</div>
     </div>
 
-    <!-- Discovery Counter for the 50 Drifting Stars -->
-    <div class="discovery-counter" id="discoveredBadge">
-      ✨ 0 / 50 Whispers Discovered (Tap the drifting stars in the sky)
-    </div>
-
-    <!-- 1. THE WINDOW OF US: 3D FLIP POLAROIDS -->
+    <!-- 1. ENLARGED WINDOW OF US -->
     <div class="section-title">✦ The Window of Us ✦</div>
-    <div class="section-desc">Tap each frosted memory frame to reveal us</div>
+    <div class="section-desc">Tap each frosted memory to flip open our pictures</div>
     
     <div class="gallery-grid">
-      <!-- Card 1 -->
+      <!-- 1. Pout -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
-            <span>✨</span>
-            <p>Pout Telepathy</p>
-            <small>Tap to Reveal</small>
+            <span>🤍</span>
+            <p>wallet memory</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo1.jpg" alt="Memory 1" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+1'"/>
-            <div class="caption">Cutest Pout 🤍</div>
+            <img src="photo1.jpg" alt="wallet memory" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=wallet+memory'"/>
+            <div class="caption">wallet memory</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 2 -->
+      <!-- 2. Highlights -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
             <span>🧿</span>
-            <p>Our Dual World</p>
-            <small>Tap to Reveal</small>
+            <p>highlights together</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo2.jpg" alt="Memory 2" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+2'"/>
-            <div class="caption">USS & Evil Eye 🦋</div>
+            <img src="photo2.jpg" alt="highlights together" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=highlights+together'"/>
+            <div class="caption">highlights together</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 3 -->
+      <!-- 3. Mentioning -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
             <span>💍</span>
-            <p>Matching Handles</p>
-            <small>Tap to Reveal</small>
+            <p>mentioning</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo3.jpg" alt="Memory 3" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+3'"/>
-            <div class="caption">Weirdcore & Dreamcore ✨</div>
+            <img src="photo3.jpg" alt="mentioning" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=mentioning'"/>
+            <div class="caption">mentioning</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 4 -->
+      <!-- 4. Rakhi -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
-            <span>🌸</span>
-            <p>Mehndi & Roses</p>
-            <small>Tap to Reveal</small>
+            <span>🌿</span>
+            <p>rakhi together</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo4.jpg" alt="Memory 4" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+4'"/>
-            <div class="caption">Rakshabandhan Hands 🌿</div>
+            <img src="photo4.jpg" alt="rakhi together" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=rakhi+together'"/>
+            <div class="caption">rakhi together</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 5 -->
+      <!-- 5. Harry Pottah -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
-            <span>🧁</span>
-            <p>Clay Minis & Smiles</p>
-            <small>Tap to Reveal</small>
+            <span>✨</span>
+            <p>harry pottah</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo5.jpg" alt="Memory 5" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+5'"/>
-            <div class="caption">Your Beautiful Smile 💫</div>
+            <img src="photo5.jpg" alt="harry pottah" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=harry+pottah'"/>
+            <div class="caption">harry pottah</div>
           </div>
         </div>
       </div>
 
-      <!-- Card 6 -->
+      <!-- 6. Elara and Gunnu -->
       <div class="flip-card" onclick="this.classList.toggle('flipped')">
         <div class="flip-inner">
           <div class="flip-front">
             <span>🧸</span>
-            <p>Elara & Gunnu</p>
-            <small>Tap to Reveal</small>
+            <p>elara and gunnu</p>
+            <small>tap to flip</small>
           </div>
           <div class="flip-back">
-            <img src="photo6.jpg" alt="Memory 6" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+6'"/>
-            <div class="caption">Elara Keeping Guard 💙</div>
+            <img src="photo6.jpg" alt="elara and gunnu" onerror="this.src='https://placehold.co/600x800/1e293b/38bdf8?text=elara+and+gunnu'"/>
+            <div class="caption">elara and gunnu</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 2. THE CELESTIAL POEM SCROLL -->
+    <!-- 2. THE DEDICATED 50 REASONS VAULT BOX -->
+    <div class="section-title">✦ 50 Things I Love About You ✦</div>
+    <div class="section-desc">Tap each star inside the celestial box below to reveal what my heart whispers about you</div>
+
+    <div class="reasons-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--pink-glow); font-weight: 700; margin-bottom: 12px;">
+        <span>Stardust Vault</span>
+        <span id="starCounter">0 / 50 Revealed</span>
+      </div>
+
+      <div class="reasons-grid" id="starGrid">
+        <!-- 50 Stars generated via JS -->
+      </div>
+    </div>
+
+    <!-- 3. THE CELESTIAL POEM SCROLL -->
     <div class="poem-scroll">
       <h3>✦ TERI US MUSKURAHAT KI ✦</h3>
       <div class="poem-lines">
@@ -512,7 +557,7 @@ AUR TUMHARI WOH KHILKHILATI MUSKURAHAT…
       </div>
     </div>
 
-    <!-- 3. THE WAX-SEALED VAULT LETTER -->
+    <!-- 4. THE WAX-SEALED VAULT LETTER -->
     <div class="vault-container">
       <div class="section-title">✦ The Deep Vault ✦</div>
       <div class="section-desc">Tap the wax seal to break open my letter to you</div>
@@ -558,7 +603,7 @@ MY BSF..🥹💋💗🧿✨💍
 
   </div>
 
-  <!-- Interactive Modal for Star Whispers -->
+  <!-- Interactive Modal for Star Reason -->
   <div id="reasonModal">
     <div id="reasonNumber">Reason #0</div>
     <div id="reasonText">Content</div>
@@ -566,7 +611,7 @@ MY BSF..🥹💋💗🧿✨💍
   </div>
 
   <script>
-    // --- 1. RELATIONSHIP COUNTER (From May 6, 2026, 12:33 PM Proposal) ---
+    // --- 1. RELATIONSHIP COUNTER (From May 6, 2026, 12:33 PM) ---
     const anniversaryDate = new Date("2026-05-06T12:33:00");
 
     function updateChronometer() {
@@ -584,7 +629,7 @@ MY BSF..🥹💋💗🧿✨💍
     setInterval(updateChronometer, 1000);
     updateChronometer();
 
-    // --- 2. THE 50 REASONS DATA ---
+    // --- 2. 50 REASONS DATA ---
     const fiftyReasons = [
       "YOUR EYES",
       "YOUR NOSE",
@@ -638,103 +683,23 @@ MY BSF..🥹💋💗🧿✨💍
       "THE FACT WE’LL MARRY ONE DAY…"
     ];
 
-    // --- 3. DRIFTING STARS CANVAS ENGINE ---
-    const canvas = document.getElementById('skyCanvas');
-    const ctx = canvas.getContext('2d');
+    // Populate the 50 Stars inside their dedicated box
+    const starGrid = document.getElementById('starGrid');
+    let revealedCount = 0;
 
-    let width, height;
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // 50 Interactive Drifting Stars
-    const starNodes = fiftyReasons.map((text, i) => ({
-      id: i + 1,
-      text: text,
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.45,
-      vy: (Math.random() - 0.5) * 0.45,
-      radius: 6 + Math.random() * 4,
-      color: i % 2 === 0 ? '#38bdf8' : '#f472b6',
-      discovered: false,
-      pulse: Math.random() * 6
-    }));
-
-    let discoveredCount = 0;
-
-    function renderSky() {
-      ctx.clearRect(0, 0, width, height);
-
-      starNodes.forEach(s => {
-        // Subtle drift movement
-        s.x += s.vx;
-        s.y += s.vy;
-
-        if (s.x < 10) s.vx *= -1;
-        if (s.x > width - 10) s.vx *= -1;
-        if (s.y < 10) s.vy *= -1;
-        if (s.y > height - 10) s.vy *= -1;
-
-        s.pulse += 0.04;
-        const glow = s.radius + Math.sin(s.pulse) * 3;
-
-        // Outer Aura
-        const grad = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, glow * 2.5);
-        grad.addColorStop(0, s.color);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, glow * 2.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Inner Core
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Star index label
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-        ctx.font = '9px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(`★${s.id}`, s.x, s.y + s.radius + 12);
-      });
-
-      requestAnimationFrame(renderSky);
-    }
-    renderSky();
-
-    // Catching clicks / touches on the floating stars
-    function checkStarClick(clientX, clientY) {
-      for (let s of starNodes) {
-        const dist = Math.hypot(clientX - s.x, clientY - s.y);
-        if (dist < s.radius + 20) {
-          if (!s.discovered) {
-            s.discovered = true;
-            discoveredCount++;
-            document.getElementById('discoveredBadge').innerText = 
-              `✨ ${discoveredCount} / 50 Whispers Discovered!`;
-          }
-          openReasonModal(s.id, s.text);
-          break;
+    fiftyReasons.forEach((reason, index) => {
+      const node = document.createElement('div');
+      node.className = 'star-node';
+      node.innerHTML = `<span>★</span><span>${index + 1}</span>`;
+      node.onclick = () => {
+        if (!node.classList.contains('revealed')) {
+          node.classList.add('revealed');
+          revealedCount++;
+          document.getElementById('starCounter').innerText = `${revealedCount} / 50 Revealed`;
         }
-      }
-    }
-
-    window.addEventListener('click', (e) => {
-      // Don't trigger star if clicked on cards/letter
-      if (e.target.closest('.content-wrap') || e.target.closest('.vinyl-player')) return;
-      checkStarClick(e.clientX, e.clientY);
-    });
-
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.content-wrap') || e.target.closest('.vinyl-player')) return;
-      const t = e.touches[0];
-      checkStarClick(t.clientX, t.clientY);
+        openReasonModal(index + 1, reason);
+      };
+      starGrid.appendChild(node);
     });
 
     function openReasonModal(num, text) {
@@ -743,8 +708,8 @@ MY BSF..🥹💋💗🧿✨💍
       document.getElementById('reasonModal').classList.add('active');
 
       confetti({
-        particleCount: 20,
-        spread: 50,
+        particleCount: 22,
+        spread: 55,
         origin: { y: 0.6 }
       });
     }
@@ -753,9 +718,41 @@ MY BSF..🥹💋💗🧿✨💍
       document.getElementById('reasonModal').classList.remove('active');
     }
 
-    // --- 4. WAX SEAL BREAK MECHANIC ---
+    // --- 3. AMBIENT SKY BACKGROUND CANVAS ---
+    const canvas = document.getElementById('ambientSky');
+    const ctx = canvas.getContext('2d');
+    let w, h;
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const ambientStars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      radius: Math.random() * 1.5,
+      alpha: Math.random(),
+      speed: 0.008 + Math.random() * 0.015
+    }));
+
+    function renderAmbient() {
+      ctx.clearRect(0, 0, w, h);
+      ambientStars.forEach(s => {
+        s.alpha += s.speed;
+        const op = (Math.sin(s.alpha) + 1) / 2;
+        ctx.fillStyle = `rgba(255, 255, 255, ${op * 0.75})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(renderAmbient);
+    }
+    renderAmbient();
+
+    // --- 4. WAX SEAL MECHANIC ---
     function breakWaxSeal() {
-      const seal = document.getElementById('waxSeal');
       const letter = document.getElementById('secretLetter');
       const prompt = document.getElementById('sealPrompt');
 
@@ -763,47 +760,30 @@ MY BSF..🥹💋💗🧿✨💍
       letter.classList.add('open');
 
       confetti({
-        particleCount: 140,
+        particleCount: 150,
         spread: 100,
         origin: { y: 0.7 },
         colors: ['#fb7185', '#38bdf8', '#fde047', '#ffffff']
       });
 
-      // Smooth scroll down to letter
       setTimeout(() => {
         letter.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 200);
     }
 
-    // --- 5. AUDIO VINYL CONTROLLER ---
-    const audio = document.getElementById('bgSong');
-    const disc = document.getElementById('disc');
-    const musicStatus = document.getElementById('musicStatus');
+    // --- 5. CONTINUOUS NON-STOP BACKGROUND MUSIC ---
+    const song = document.getElementById('bgSong');
 
-    function toggleMusic() {
-      if (audio.paused) {
-        audio.play().then(() => {
-          disc.classList.add('playing');
-          musicStatus.innerText = "Playing softly 🎶";
-        }).catch(() => {
-          musicStatus.innerText = "Tap screen to enable audio";
-        });
-      } else {
-        audio.pause();
-        disc.classList.remove('playing');
-        musicStatus.innerText = "Paused";
+    function startContinuousAudio() {
+      if (song.paused) {
+        song.play().catch(() => {});
       }
     }
 
-    // Auto-start music on first tap anywhere if browser allows
-    document.body.addEventListener('click', function firstTap() {
-      if (audio.paused && !disc.classList.contains('playing')) {
-        audio.play().then(() => {
-          disc.classList.add('playing');
-          musicStatus.innerText = "Playing softly 🎶";
-        }).catch(() => {});
-      }
-    }, { once: true });
+    // Modern browsers allow playback on the first user interaction anywhere
+    window.addEventListener('click', startContinuousAudio, { passive: true });
+    window.addEventListener('touchstart', startContinuousAudio, { passive: true });
+    window.addEventListener('scroll', startContinuousAudio, { passive: true });
   </script>
 </body>
 </html>
