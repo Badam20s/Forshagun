@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Gunnu & Badam's Aero Quest 🫧</title>
+
+  <!-- Link Preview / Cover Image Meta Tags -->
+  <meta property="og:title" content="Gunnu & Badam's Orbit 🫧" />
+  <meta property="og:description" content="Happy 4-Month Anniversary, my princess 💖" />
+  <meta property="og:image" content="photo7.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="photo7.jpg" />
+
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
@@ -140,7 +150,7 @@
 
     .flip-card {
       background-color: transparent;
-      height: 380px; /* Greatly enlarged vertical viewing area */
+      height: 380px;
       perspective: 1000px;
       cursor: pointer;
     }
@@ -404,7 +414,7 @@
 </head>
 <body>
 
-  <!-- Background Audio Element (Loops Forever, No Pause Control) -->
+  <!-- Continuous Audio Element -->
   <audio id="bgSong" loop src="song.mp3" preload="auto"></audio>
 
   <!-- Ambient Sky Canvas -->
@@ -771,7 +781,7 @@ MY BSF..🥹💋💗🧿✨💍
       }, 200);
     }
 
-    // --- 5. CONTINUOUS NON-STOP BACKGROUND MUSIC ---
+    // --- 5. CONTINUOUS LOOPING BACKGROUND MUSIC ---
     const song = document.getElementById('bgSong');
 
     function startContinuousAudio() {
@@ -780,7 +790,6 @@ MY BSF..🥹💋💗🧿✨💍
       }
     }
 
-    // Modern browsers allow playback on the first user interaction anywhere
     window.addEventListener('click', startContinuousAudio, { passive: true });
     window.addEventListener('touchstart', startContinuousAudio, { passive: true });
     window.addEventListener('scroll', startContinuousAudio, { passive: true });
