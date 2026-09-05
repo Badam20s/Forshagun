@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gunnu & Badam's Aero Quest 🫧</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --night-sky: #070b19;
+      --star-glow: #38bdf8;
+      --pink-glow: #f472b6;
+      --gold-glow: #fbbf24;
+      --glass-card: rgba(15, 23, 42, 0.78);
+      --glass-border: rgba(255, 255, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(ellipse at 50% 100%, #172554 0%, #080d1a 60%, #030712 100%);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      padding-bottom: 80px;
+    }
+
+    /* Fixed Canvas for Ambient Stars & Floating Reasons */
+    #skyCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    /* Foreground Content Container */
+    .content-wrap {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Floating Vinyl Player */
+    .vinyl-player {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      padding: 8px 14px 8px 8px;
+      border-radius: 40px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      cursor: pointer;
+    }
+    .disc {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #1e293b 35%, #0f172a 40%, #0284c7 42%, #000 45%, #334155 70%, #000 100%);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      animation: spin 3.5s linear infinite;
+      animation-play-state: paused;
+    }
+    .disc.playing { animation-play-state: running; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .track-info { font-size: 11px; text-align: left; }
+    .track-title { font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; }
+    .track-sub { font-size: 9px; color: #94a3b8; }
+
+    /* Top Chronometer Header */
+    .chronometer-card {
+      text-align: center;
+      background: var(--glass-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 14px 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      width: 100%;
+    }
+    .chronometer-card h1 {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--star-glow);
+      margin-bottom: 4px;
+    }
+    .timer-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Counter Badge for Discovered Stars */
+    .discovery-counter {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pink-glow);
+      background: rgba(244, 114, 182, 0.15);
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 26px;
+      animation: pulse 2.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      margin: 32px 0 10px 0;
+      text-align: center;
+    }
+    .section-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 18px;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* --- WINDOW OF US: 3D FLIP POLAROIDS --- */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+    .flip-card {
+      background-color: transparent;
+      height: 200px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    .flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      border-radius: 16px;
+    }
+    .flip-card.flipped .flip-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-front, .flip-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .flip-front {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .flip-front span { font-size: 28px; margin-bottom: 6px; }
+    .flip-front p { font-size: 11px; color: #93c5fd; font-weight: 600; }
+    .flip-front small { font-size: 9px; color: #64748b; margin-top: 4px; }
+    .flip-back {
+      background: #0f172a;
+      transform: rotateY(180deg);
+      overflow: hidden;
+      padding: 6px 6px 24px 6px;
+    }
+    .flip-back img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .flip-back .caption {
+      position: absolute;
+      bottom: 5px;
+      left: 0;
+      width: 100%;
+      font-size: 10px;
+      font-weight: 600;
+      color: #f8fafc;
+      text-shadow: 0 1px 4px #000;
+    }
+
+    /* --- THE POEM SCROLL --- */
+    .poem-scroll {
+      background: linear-gradient(180deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(244, 114, 182, 0.25);
+      border-radius: 20px;
+      padding: 24px 20px;
+      width: 100%;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .poem-scroll h3 {
+      font-size: 15px;
+      color: var(--pink-glow);
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+    .poem-lines {
+      font-size: 12.5px;
+      line-height: 2;
+      color: #e2e8f0;
+      font-family: serif;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      white-space: pre-line;
+    }
+
+    /* --- WAX SEAL VAULT & LETTER --- */
+    .vault-container {
+      width: 100%;
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .wax-seal-wrapper {
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s ease;
+    }
+    .wax-seal-wrapper:active { transform: scale(0.96); }
+    .wax-seal {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fb7185, #e11d48 70%, #9f1239 100%);
+      box-shadow: 0 8px 24px rgba(225, 29, 72, 0.5), inset 0 2px 4px rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px dashed rgba(255, 255, 255, 0.3);
+      font-size: 28px;
+    }
+    .seal-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #fb7185;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .letter-paper {
+      display: none;
+      margin-top: 20px;
+      background: linear-gradient(170deg, #fffbeb 0%, #fef3c7 100%);
+      color: #1e1e24;
+      border-radius: 16px;
+      padding: 26px 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      width: 100%;
+      border: 2px solid #fde68a;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .letter-paper.open {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .letter-paper h2 {
+      font-size: 16px;
+      color: #9f1239;
+      margin-bottom: 14px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .letter-text {
+      font-size: 13px;
+      line-height: 1.8;
+      color: #292524;
+      white-space: pre-line;
+      text-align: left;
+    }
+
+    /* --- FLOATING MODAL FOR REVEALED STAR REASONS --- */
+    #reasonModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 85%;
+      max-width: 400px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--star-glow);
+      border-radius: 20px;
+      padding: 22px 18px;
+      z-index: 1000;
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
+      text-align: center;
+      transition: all 0.25s ease;
+      opacity: 0;
+    }
+    #reasonModal.active {
+      display: block;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    #reasonNumber {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--pink-glow);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    #reasonText {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f8fafc;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .modal-close-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Audio Element (Put song.mp3 in the repo folder) -->
+  <audio id="bgSong" loop src="song.mp3"></audio>
+
+  <!-- Background Canvas with Floating Drifting Stars -->
+  <canvas id="skyCanvas"></canvas>
+
+  <!-- Floating Vinyl Player Widget -->
+  <div class="vinyl-player" id="musicToggle" onclick="toggleMusic()">
+    <div class="disc" id="disc"></div>
+    <div class="track-info">
+      <div class="track-title">Can't Help Falling in Love</div>
+      <div class="track-sub" id="musicStatus">Tap to Play Music 🎵</div>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    
+    <!-- Real-time Anniversary Chronometer -->
+    <div class="chronometer-card">
+      <h1>Gunnu & Badam's Orbit</h1>
+      <div class="timer-text" id="timeElapsed">Calculating lightyears...</div>
+    </div>
+
+    <!-- Discovery Counter for the 50 Drifting Stars -->
+    <div class="discovery-counter" id="discoveredBadge">
+      ✨ 0 / 50 Whispers Discovered (Tap the drifting stars in the sky)
+    </div>
+
+    <!-- 1. THE WINDOW OF US: 3D FLIP POLAROIDS -->
+    <div class="section-title">✦ The Window of Us ✦</div>
+    <div class="section-desc">Tap each frosted memory frame to reveal us</div>
+    
+    <div class="gallery-grid">
+      <!-- Card 1 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>✨</span>
+            <p>Pout Telepathy</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo1.jpg" alt="Memory 1" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+1'"/>
+            <div class="caption">Cutest Pout 🤍</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>🧿</span>
+            <p>Our Dual World</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo2.jpg" alt="Memory 2" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+2'"/>
+            <div class="caption">USS & Evil Eye 🦋</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>💍</span>
+            <p>Matching Handles</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo3.jpg" alt="Memory 3" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+3'"/>
+            <div class="caption">Weirdcore & Dreamcore ✨</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>🌸</span>
+            <p>Mehndi & Roses</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo4.jpg" alt="Memory 4" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+4'"/>
+            <div class="caption">Rakshabandhan Hands 🌿</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>🧁</span>
+            <p>Clay Minis & Smiles</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo5.jpg" alt="Memory 5" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+5'"/>
+            <div class="caption">Your Beautiful Smile 💫</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="flip-card" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <span>🧸</span>
+            <p>Elara & Gunnu</p>
+            <small>Tap to Reveal</small>
+          </div>
+          <div class="flip-back">
+            <img src="photo6.jpg" alt="Memory 6" onerror="this.src='https://placehold.co/400x400/1e293b/38bdf8?text=Photo+6'"/>
+            <div class="caption">Elara Keeping Guard 💙</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. THE CELESTIAL POEM SCROLL -->
+    <div class="poem-scroll">
+      <h3>✦ TERI US MUSKURAHAT KI ✦</h3>
+      <div class="poem-lines">
+AAJ BAAT KRNI MAI MUJHE TERI US MUSKURAHAT KI…
+JISE DEKH MURJHAYI KALIYA HAI WAPIS UTHTI…
+JIS MUSKURAHAT MAI TERE SHEESHE SE DAANT CHAAND KI ROSHNI LAGEN..
+WOH CHAND KI ROSHNI JOH ANDHERE MAI UJALA DETI HAI…
+JOH BHATKE MUSAFIR KO USKI RAH DIKHATI HAI…
+AB BAAT KRU TERE UN HOTHO KI…
+DEKH JINHE MAI SOCHU KO ZYADA GULABI KON…
+WOH SURAJ KI LALIMA YA TERE LAL HOTH…
+KHUDA NE TERI MUSKURAHAT KO BANANE MAI ARSE LAGAYE THE…
+TAB JAAKE TOH KHUDA IS DUNIYA KI SABSE KHUBSURAT CHIZ BANA PAAYA…
+AB KHUDA CHAH KE BHI TERE JAISA KOI NHI BANA SAKTA…
+BANANE BETHE TOH SAAL LAG JAYEN…
+AUR BAN BHI JAYE TOH TERE CHARCHE KABHI KHATAM NHI HONGE…
+ITNI SUNDAR HO TUM…
+AUR TUMHARI WOH KHILKHILATI MUSKURAHAT…
+      </div>
+    </div>
+
+    <!-- 3. THE WAX-SEALED VAULT LETTER -->
+    <div class="vault-container">
+      <div class="section-title">✦ The Deep Vault ✦</div>
+      <div class="section-desc">Tap the wax seal to break open my letter to you</div>
+
+      <div class="wax-seal-wrapper" id="waxSeal" onclick="breakWaxSeal()">
+        <div class="wax-seal">💌</div>
+        <div class="seal-hint" id="sealPrompt">Touch to break the wax seal</div>
+      </div>
+
+      <div class="letter-paper" id="secretLetter">
+        <h2>To My Little Baby, Gunnu 💍</h2>
+        <div class="letter-text">
+SHAGUN BETU….THIS IS MY LETTER TO YOU…..TO MY LITTLE BABY…..WELL WE HAVE COMPLETED 4 MONTHS EK SAATH….THIS ACHIEVEMENT IS SO BIG FOR ME YK WHY?….MY LONGEST EVER RELATIONSHIPPPP HEHE…..AND I WANT THISSS TO LAST HAMESHA KE LIYE….WE HAVE SEEN SO MANY UPS AND DOWNS….SO MANY HAPPY MOMENTS AND SOME SAD ONES TOO….MOMENTS WHEN YOU NEEDED REASSURANCE AND MOMENTS WHEN I NEEDED THEM….HAR MOMENT DEKHA HUMNE….AND AAGE BHI MILENGE…BUT YK KABHI CHHODENGE NHI…HAMESHA AISE HI RHENGE…
+
+THIS MONTH WAS BIZZARE…AAPKE FRIENDS KI BAKCHODI…MERE FRIENDS KI BAKCHODI….FEEL DOWN…MISHIKA…AND KYA KUCH NHI….BUT WE PULLED THROUGH….AND HAMESHA KRTE RHENGE….CUZ THATS WHAT WE ARE BABE….WE ARE EK DUSRE KE BESTFRIENDS….COUPLE BHI HAIN….LEKIN BESTFRIENDS PEHLE….BESTEST FRIENDS…..I DON’T NEED NO HG OR GIRLBESTFRIEND….WHEN I HAVEE YOUUUU……AB TOH I FELL FOR YOU ITNA KI DUSRI LADKI KI TARAF DEKHNA FEELS LIKE I’M CHEATING HEHE….TOH AAP SAMJH RHI HO I LOVE YOU KITNA SAARA….HAMESHA KRUNGA…..
+
+THIS YEARS RAKSHABANDHAN WAS AMAZING…. ALL CUZ OF YOUUU WE DID SO MANY THINGSS EK SAATH….EDITS….TRANSITION….VCCC PUREE TIME….I LOVED EVERY SINGLE MOMENTTT….THAT RANDOM NIGHT WHERE HUM DONO EKDAM CONNECT HOGYE….OUR FIRST 4 BJE TAK BAATE….ITS ALL WHAT I LOVE….SAB CHIZE MERE LIYE SPECIAL HAII…APKA KOI EFFORT MERE LIYE BAREMINIMUM NHI HOGA….AAJ AAPNE WOH STORY JOH DAALI….IT WAS SO DAMN SPECIAL TO ME JAAN….LIKE MERE LIYE HAR CHIZ JOH AAP KRTI HO IS SPECIAL CUZ YOU ARE MY BABYYYY….AND HAMESHA RHOGI….HUM DONO HAMESHA AISE RHENGE…CHAHE KUCH BHI HO JAYE….KOI HAMARE BICH NHI AYEGA….WE ARE GONNA BE EACH OTHER’S FOREVER….HAMESHA SAMJHINNN…..
+
+THANK YPU FOR COMING INTO MY LIFE BABE….I’M HAPPY I TEXTED YOU ON MAY 3 7:56 MINS PE AND YOU PROPOSED TO ME ON MAY 6 12:33 PE….HAMESHA GONNA BE GRATEFUL….BABE NOW LET US ENJOY OUR 4 MONTHS KI ANNIVERSARY EK SATH…..
+
+HAPPY ANNIVERSARY MERI…
+SHAGUN..
+GUNNU..
+BACHA..
+BETU..
+BABY..
+BABE..
+BABU..
+SHONU..
+PRINCESS..
+BUTTERFLY..
+RADHA..
+DANDELION..
+PHOOL..
+BAUNI..
+CHIRKUT..
+BUTKI..
+MY LOVE..
+MY BSF..🥹💋💗🧿✨💍
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Interactive Modal for Star Whispers -->
+  <div id="reasonModal">
+    <div id="reasonNumber">Reason #0</div>
+    <div id="reasonText">Content</div>
+    <button class="modal-close-btn" onclick="closeReasonModal()">Keep in my heart ✨</button>
+  </div>
+
+  <script>
+    // --- 1. RELATIONSHIP COUNTER (From May 6, 2026, 12:33 PM Proposal) ---
+    const anniversaryDate = new Date("2026-05-06T12:33:00");
+
+    function updateChronometer() {
+      const now = new Date();
+      const diff = now - anniversaryDate;
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      document.getElementById('timeElapsed').innerText = 
+        `${days} Days, ${hours} Hours, ${minutes} Mins, ${seconds} Secs of Us ♾️`;
+    }
+    setInterval(updateChronometer, 1000);
+    updateChronometer();
+
+    // --- 2. THE 50 REASONS DATA ---
+    const fiftyReasons = [
+      "YOUR EYES",
+      "YOUR NOSE",
+      "YOUR VOICE",
+      "YOUR HAIRS",
+      "YOUR TEETH",
+      "YOUR LIPS",
+      "YOUR SMILE",
+      "YOUR WHITE SPOTS",
+      "YOUR BOOBIES (YEAH I LIKE EM TOO NOT IN THE BAD WAY OBV)",
+      "THE WAY YOU CARE FOR ME",
+      "THE WAY YOU SCOLD ME",
+      "THE WAY YOU GET EXCITED",
+      "THE WAY WE TALK",
+      "THE WAY WE SAY GOOD MORNING",
+      "THE WAY WE HAVE A SYSTEMATIC THING TO SAY BYE",
+      "THE WAY WE SAY GOOD NIGHT",
+      "THE WAY WE STUDY TOGETHER",
+      "THE WAY YOU LOOK AT ME",
+      "THE WAY WE ARE WEIRDOS",
+      "THE WAY I CAN BE GOOFY",
+      "THE WAY YOU ARE MY KID",
+      "THE WAY I CAN BE YOUR KID",
+      "THE WAY YOUR EYES SHINE",
+      "THE WAY YOU SOMETIMES CRY",
+      "THE CLOTHES YOU WEAR",
+      "THE THINGS YOU ENJOY",
+      "THE WAY YOU DRAW",
+      "THE WAY YOU SING",
+      "THE WAY YOU WALK",
+      "THE WAY YOUR HAIRS MOVE",
+      "THE WAY YOU TALK ABOUT ME",
+      "THE WAY YOU GET JEALOUS",
+      "THE WAY YOU TAKE STAND FOR ME",
+      "THE WAY YOU ARE SO SAFE FOR ME",
+      "THE WAY I FORGET ALL MY PROBLEMS WITH YOU",
+      "THE WAY YOU GUIDE ME",
+      "THE WAY WE TALK ON VC",
+      "THE WAY WE MAKE EDITS",
+      "THE WAY WE FLEX EACH OTHER",
+      "THE WAY WE ARE SAME",
+      "THE WAY WE DO SAME THINGS",
+      "THE WAY WE ARE COMFY",
+      "THAT WE ARE BEST FRIENDS",
+      "THE WAY WE LOVE",
+      "THE WAY WE YEARN",
+      "THE WAY YOU WRITE POEMS FOR ME",
+      "THE WAY YOU MISS ME",
+      "THE WAY YOU MAKE ME SECURE",
+      "THE WAY WE’LL BE LIKE THIS FOREVER",
+      "THE FACT WE’LL MARRY ONE DAY…"
+    ];
+
+    // --- 3. DRIFTING STARS CANVAS ENGINE ---
+    const canvas = document.getElementById('skyCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 50 Interactive Drifting Stars
+    const starNodes = fiftyReasons.map((text, i) => ({
+      id: i + 1,
+      text: text,
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.45,
+      vy: (Math.random() - 0.5) * 0.45,
+      radius: 6 + Math.random() * 4,
+      color: i % 2 === 0 ? '#38bdf8' : '#f472b6',
+      discovered: false,
+      pulse: Math.random() * 6
+    }));
+
+    let discoveredCount = 0;
+
+    function renderSky() {
+      ctx.clearRect(0, 0, width, height);
+
+      starNodes.forEach(s => {
+        // Subtle drift movement
+        s.x += s.vx;
+        s.y += s.vy;
+
+        if (s.x < 10) s.vx *= -1;
+        if (s.x > width - 10) s.vx *= -1;
+        if (s.y < 10) s.vy *= -1;
+        if (s.y > height - 10) s.vy *= -1;
+
+        s.pulse += 0.04;
+        const glow = s.radius + Math.sin(s.pulse) * 3;
+
+        // Outer Aura
+        const grad = ctx.createRadialGradient(s.x, s.y, 1, s.x, s.y, glow * 2.5);
+        grad.addColorStop(0, s.color);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, glow * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner Core
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Star index label
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`★${s.id}`, s.x, s.y + s.radius + 12);
+      });
+
+      requestAnimationFrame(renderSky);
+    }
+    renderSky();
+
+    // Catching clicks / touches on the floating stars
+    function checkStarClick(clientX, clientY) {
+      for (let s of starNodes) {
+        const dist = Math.hypot(clientX - s.x, clientY - s.y);
+        if (dist < s.radius + 20) {
+          if (!s.discovered) {
+            s.discovered = true;
+            discoveredCount++;
+            document.getElementById('discoveredBadge').innerText = 
+              `✨ ${discoveredCount} / 50 Whispers Discovered!`;
+          }
+          openReasonModal(s.id, s.text);
+          break;
+        }
+      }
+    }
+
+    window.addEventListener('click', (e) => {
+      // Don't trigger star if clicked on cards/letter
+      if (e.target.closest('.content-wrap') || e.target.closest('.vinyl-player')) return;
+      checkStarClick(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.content-wrap') || e.target.closest('.vinyl-player')) return;
+      const t = e.touches[0];
+      checkStarClick(t.clientX, t.clientY);
+    });
+
+    function openReasonModal(num, text) {
+      document.getElementById('reasonNumber').innerText = `Whisper #${num} of 50`;
+      document.getElementById('reasonText').innerText = text;
+      document.getElementById('reasonModal').classList.add('active');
+
+      confetti({
+        particleCount: 20,
+        spread: 50,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function closeReasonModal() {
+      document.getElementById('reasonModal').classList.remove('active');
+    }
+
+    // --- 4. WAX SEAL BREAK MECHANIC ---
+    function breakWaxSeal() {
+      const seal = document.getElementById('waxSeal');
+      const letter = document.getElementById('secretLetter');
+      const prompt = document.getElementById('sealPrompt');
+
+      prompt.innerText = "Wax Seal Unfolded 💖";
+      letter.classList.add('open');
+
+      confetti({
+        particleCount: 140,
+        spread: 100,
+        origin: { y: 0.7 },
+        colors: ['#fb7185', '#38bdf8', '#fde047', '#ffffff']
+      });
+
+      // Smooth scroll down to letter
+      setTimeout(() => {
+        letter.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+
+    // --- 5. AUDIO VINYL CONTROLLER ---
+    const audio = document.getElementById('bgSong');
+    const disc = document.getElementById('disc');
+    const musicStatus = document.getElementById('musicStatus');
+
+    function toggleMusic() {
+      if (audio.paused) {
+        audio.play().then(() => {
+          disc.classList.add('playing');
+          musicStatus.innerText = "Playing softly 🎶";
+        }).catch(() => {
+          musicStatus.innerText = "Tap screen to enable audio";
+        });
+      } else {
+        audio.pause();
+        disc.classList.remove('playing');
+        musicStatus.innerText = "Paused";
+      }
+    }
+
+    // Auto-start music on first tap anywhere if browser allows
+    document.body.addEventListener('click', function firstTap() {
+      if (audio.paused && !disc.classList.contains('playing')) {
+        audio.play().then(() => {
+          disc.classList.add('playing');
+          musicStatus.innerText = "Playing softly 🎶";
+        }).catch(() => {});
+      }
+    }, { once: true });
+  </script>
+</body>
+</html>
